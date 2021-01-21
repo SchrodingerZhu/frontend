@@ -66,6 +66,7 @@ namespace symtable {
             local_defined.pop();
             for (const auto &i : a) {
                 auto iter = table.find(i);
+                if (iter == table.end()) continue;
                 if (iter->second.size() <= 1) {
                     table.erase(iter);
                 } else {
