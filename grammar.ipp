@@ -39,7 +39,7 @@ GRAMMAR_MATCH(TEMPLATE(Seq, Head, Tail...),
               })
 
 template<typename Head, typename ...Tail>
-bool Seq<Head, Tail...>::seq_match(PContext &context, std::vector<TreePtr> & subtrees) const {
+bool Seq<Head, Tail...>::seq_match(PContext &context, std::vector<TreePtr> &subtrees) const {
     TreePtr tree = Head().match(context.next());
     if (tree) {
         context.accumulator += tree->parsed_region.size();
@@ -54,7 +54,7 @@ template<typename Head>
 GRAMMAR_MATCH(TEMPLATE(Seq, Head),
 
               {
-                  TreePtr tree = Head().match(context);
+                  TreePtr tree = Head().match(context.next());
                   if (tree) {
                       auto seq = MAKE_TREE(tree->parsed_region.size(), tree);
                       MEMOIZATION(seq);
@@ -65,7 +65,7 @@ GRAMMAR_MATCH(TEMPLATE(Seq, Head),
               })
 
 template<typename Last>
-bool Seq<Last>::seq_match(PContext &context, std::vector<TreePtr> & subtrees) const {
+bool Seq<Last>::seq_match(PContext &context, std::vector<TreePtr> &subtrees) const {
     TreePtr tree = Last().match(context.next());
     if (tree) {
         context.accumulator += tree->parsed_region.size();
@@ -75,3 +75,44 @@ bool Seq<Last>::seq_match(PContext &context, std::vector<TreePtr> & subtrees) co
         return false;
     }
 }
+
+
+template<typename Head, typename ...Tail>
+GRAMMAR_MATCH(TEMPLATE(Ord, Head, Tail...),
+              {
+                  auto tree = Head().match(context.next());
+                  if (tree) {
+                      auto ord = MAKE_TREE(tree->parsed_region.size(), tree);
+                      MEMOIZATION(ord);
+                      return ord;
+                  } else {
+                      return Ord<Tail...>::match(context);
+                  }
+              })
+
+template<typename Head>
+GRAMMAR_MATCH(TEMPLATE(Ord, Head),
+
+              {
+                  TreePtr tree = Head().match(context.next());
+                  if (tree) {
+                      auto ord = MAKE_TREE(tree->parsed_region.size(), tree);
+                      MEMOIZATION(ord);
+                      return ord;
+                  }
+                  MEMOIZATION(nullptr);
+                  return nullptr;
+              })
+
+template<typename S>
+GRAMMAR_MATCH(Optional<S>, {
+    TreePtr tree = S().match(context.next());
+    if (tree) {
+        auto some = MAKE_TREE(tree->parsed_region.size(), tree);
+        MEMOIZATION(some);
+        return some;
+    }
+    auto none = MAKE_TREE(0);
+    MEMOIZATION(none);
+    return none;
+})

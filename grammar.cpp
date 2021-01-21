@@ -11,7 +11,7 @@ size_t MemoKeyHasher::operator()(const MemoKey &key) const {
 bool Grammar::active() { return false; }
 
 MemoKey PContext::key(const std::type_info &index) const {
-    return std::make_pair<size_t, std::type_index>(start_position + 0, index);
+    return { start_position, index };
 }
 
 PContext PContext::next() {
@@ -19,7 +19,7 @@ PContext PContext::next() {
             table,
             text,
             start_position + accumulator,
-            accumulator
+            0
     };
 }
 
@@ -37,6 +37,12 @@ GRAMMAR_MATCH(Start, {
 GRAMMAR_MATCH(End, {
     auto result =
             context.start_position == context.text.size() ? MAKE_TREE(0) : nullptr;
+    MEMOIZATION(result);
+    return result;
+})
+
+GRAMMAR_MATCH(Nothing, {
+    auto result = MAKE_TREE(0);
     MEMOIZATION(result);
     return result;
 })

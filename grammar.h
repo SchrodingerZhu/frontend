@@ -95,4 +95,24 @@ GRAMMAR_DECLARE(Seq, Seq < Tail...>, virtual bool seq_match(PContext &context, s
 template<typename Head>
 GRAMMAR_DECLARE(Seq<Head>, Grammar, virtual bool seq_match(PContext &context, std::vector<TreePtr> &) const;);
 
+template<typename Head, typename ...Tail>
+GRAMMAR_DECLARE(Ord, Ord < Tail...>);
+
+template<typename Head>
+GRAMMAR_DECLARE(Ord<Head>, Grammar);
+
+template<typename S>
+GRAMMAR_DECLARE(Optional, Grammar);
+
+template<typename S>
+GRAMMAR_DECLARE(Plus, Grammar);
+
+template<typename S>
+GRAMMAR_DECLARE(Asterisk, Grammar);
+
+GRAMMAR_DECLARE(Nothing, Grammar);
+
+template<typename S>
+GRAMMAR_DECLARE(Not, Grammar);
+
 #endif //FRONTEND_GRAMMAR_H

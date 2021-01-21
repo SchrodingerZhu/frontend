@@ -5,13 +5,11 @@
 
 
 
-struct Test : public Seq<Char<'a'>, Char<'b'>, Char<'b'>> {
-
-};
+struct Test : public Seq<Char<'a'>, Char<'b'>, Ord<Char<'b'>, Char<'c'>>> {};
 int main() {
     PContext context {
             std::make_shared<MemoTable>(),
-            "abb",
+            "abc",
             0,
             0
     } ;
