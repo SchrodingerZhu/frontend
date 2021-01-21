@@ -1,3 +1,8 @@
+#ifndef FRONTEND_GRAMMAR_IPP
+#define FRONTEND_GRAMMAR_IPP
+
+#include "grammar.h"
+
 template<char C>
 GRAMMAR_MATCH(Char<C>, {
     auto result = context.start_position != context.text.size() &&
@@ -178,4 +183,4 @@ std::vector<parser::TreePtr> parser::ParseTree::compress() const {
         return collect;
     }
 }
-
+#endif //FRONTEND_GRAMMAR_IPP

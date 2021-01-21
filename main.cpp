@@ -2,69 +2,53 @@
 #include "grammar.h"
 #include "grammar.ipp"
 
-struct Primary;
-struct Digit;
-struct Toplevel;
-struct Expr;
+namespace grammar {
+    struct Primary;
+    struct Digit;
+    struct Toplevel;
+    struct Expr;
+    using namespace parser;
 
-using namespace parser;
+    RULE(Op, Ord<Char<'+'>, Char<'-'>>)
 
-RULE(Op, Ord<Char<'+'>, Char<'-'>>)
+    RULE(MicroBegin, Keyword<'b', 'e', 'g', 'i', 'n'>)
 
-RULE(MicroBegin, Keyword<'b', 'e', 'g', 'i', 'n'>)
+    RULE(MicroEnd, Keyword<'e', 'n', 'd'>)
 
-RULE(MicroEnd, Keyword<'e', 'n', 'd'>)
+    RULE(Read, Keyword<'r', 'e', 'a', 'd'>)
 
-RULE(Read, Keyword<'r', 'e', 'a', 'd'>)
+    RULE(Write, Keyword<'w', 'r', 'i', 't', 'e'>)
 
-RULE(Write, Keyword<'w', 'r', 'i', 't', 'e'>)
+    RULE(Alpha, Ord<CharRange<'a', 'z'>, CharRange<'A', 'Z'>>)
 
-RULE(Alpha, Ord<CharRange<'a', 'z'>, CharRange<'A', 'Z'>>)
+    RULE(Digit, CharRange<'0', '9'>)
 
-RULE(Digit, CharRange<'0', '9'>)
+    RULE(Integer, Plus<Digit>)
 
-RULE(Integer, Plus<Digit>)
+    RULE(ASCII, Ord<Alpha, Digit, Char<'_'>>)
 
-RULE(ASCII, Ord<Alpha, Digit, Char<'_'>>)
+    RULE(Identity, Seq<Ord<Alpha, Char<'_'>>, Asterisk<ASCII>>)
 
-RULE(Identity, Seq<Ord<Alpha, Char<'_'>>, Asterisk<ASCII>>)
+    RULE(AssignmentOp, Seq<Char<':'>, Char<'='>>)
 
+    RULE(Assignment, SpaceInterleaved<Identity, AssignmentOp, Expr>)
 
-RULE(AssignmentOp, Seq<Char<':'>, Char<'='>>)
+    RULE(IdentityList, SpaceInterleaved<Identity, Asterisk<SpaceInterleaved<Char<','>, IdentityList>>>);
 
-RULE(Assignment, SpaceInterleaved<Identity, AssignmentOp, Expr>)
+    RULE(ExprList, SpaceInterleaved<Expr, Asterisk<SpaceInterleaved<Char<','>, ExprList>>>);
 
-RULE(IdentityList, SpaceInterleaved<Identity, Asterisk<SpaceInterleaved<Char<','>, IdentityList>>>);
+    RULE(ReadStmt, SpaceInterleaved<Read, Char<'('>, IdentityList, Char<')'>>)
 
-RULE(ExprList, SpaceInterleaved<Expr, Asterisk<SpaceInterleaved<Char<','>, ExprList>>>);
+    RULE(WriteStmt, SpaceInterleaved<Write, Char<'('>, ExprList, Char<')'>>)
 
-RULE(ReadStmt, SpaceInterleaved<Read, Char<'('>, IdentityList, Char<')'>>)
+    RULE(Primary, Ord<SpaceInterleaved<Char<'('>, Expr, Char<')'>>, Identity, Integer>)
 
-RULE(WriteStmt, SpaceInterleaved<Write, Char<'('>, ExprList, Char<')'>>)
+    RULE(Expr, Ord<SpaceInterleaved<Primary, Asterisk<SpaceInterleaved<Op, Primary>>>>)
 
-RULE(Primary, Ord<SpaceInterleaved<Char<'('>, Expr, Char<')'>>, Identity, Integer>)
+    RULE(Stmt, SpaceInterleaved<Ord<ReadStmt, WriteStmt, Assignment>, Char<';'>>)
 
-RULE(Expr, Ord<SpaceInterleaved<Primary, Asterisk<SpaceInterleaved<Op, Primary>>>>)
+    RULE(Toplevel, SpaceInterleaved<Start, MicroBegin, Plus<Stmt>, MicroEnd, End>)
 
-RULE(Stmt, SpaceInterleaved<Ord<ReadStmt, WriteStmt, Assignment>, Char<';'>>)
+    using SelectRule = Selector<Toplevel, ReadStmt, WriteStmt, Expr, Primary, Identity, Assignment, Integer, Op>;
 
-RULE(Toplevel, SpaceInterleaved<Start, MicroBegin, Plus<Stmt>, MicroEnd, End>)
-
-using SelectRule = Selector<Toplevel, ReadStmt, WriteStmt, Expr, Primary, Identity, Assignment, Integer, Op>;
-
-int main() {
-    PContext context{
-            std::make_shared<MemoTable>(),
-            "begin\n"
-            "        read(a, b);\n"
-            "        c := b + 1;\n"
-            "        write(c, a + (b + c) - 3); \n"
-            "end",
-            0,
-            0
-    };
-    auto t = Toplevel().match(context);
-    auto v = t->compress<SelectRule>();
-    v[0]->display(std::cout);
-    return 0;
 }

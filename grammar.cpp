@@ -2,7 +2,7 @@
 // Created by schrodinger on 1/21/21.
 //
 
-#include "grammar.h"
+#include "frontend.h"
 #include <cxxabi.h>
 
 size_t parser::MemoKeyHasher::operator()(const MemoKey &key) const {
