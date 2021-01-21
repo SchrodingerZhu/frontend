@@ -39,6 +39,18 @@ namespace symtable {
             return true;
         }
 
+        template<class ...Args>
+        bool update(std::string name, Args &&... args) {
+            local_defined.top().push_back(name);
+            auto iter = table.find(name);
+            if (iter == table.end()) {
+                return false;
+            } else {
+                iter->second.top().second = Value(std::forward<Args>(args)...);
+            }
+            return true;
+        }
+
         std::optional<Value> operator()(std::string name) {
             auto iter = table.find(name);
             if (iter == table.end()) {
