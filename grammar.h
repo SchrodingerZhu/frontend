@@ -10,7 +10,11 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <string>
+#include <ostream>
+#include <cstring>
 
+namespace parser {
 struct PContext;
 
 
@@ -26,8 +30,6 @@ using MemoTable = std::unordered_map<MemoKey, TreePtr, MemoKeyHasher>;
 class Grammar {
 public:
     [[nodiscard]]  virtual TreePtr match(PContext context) const = 0;
-
-    [[nodiscard]]  virtual bool active();
 };
 
 
@@ -39,6 +41,7 @@ struct PContext {
     size_t accumulator = 0;
 
     [[nodiscard]] MemoKey key(const std::type_info &index) const;
+
     PContext next();
 };
 
@@ -47,12 +50,19 @@ struct ParseTree {
     std::type_index instance;
     std::vector<TreePtr> subtrees;
 
+    ParseTree(std::string_view parsed_region, std::type_index instance, std::vector<TreePtr> subtrees);
+
     ParseTree(const PContext &context, size_t length, std::type_index index, std::vector<TreePtr> subtrees);
 
+    void display(std::ostream &out, int count = 0);
+
+    template<class S>
+    std::vector<TreePtr> compress() const;
 };
 
+
 #define GRAMMAR_MATCH(TYPE, BLOCK) \
-    TreePtr TYPE::match(PContext context) const { \
+    parser::TreePtr parser::TYPE::match(parser::PContext context) const { \
         auto iter = context.table->find(context.key(typeid(*this)));                            \
         if (iter != context.table->end()) {                   \
             return iter->second;                        \
@@ -112,7 +122,60 @@ GRAMMAR_DECLARE(Asterisk, Grammar);
 
 GRAMMAR_DECLARE(Nothing, Grammar);
 
+GRAMMAR_DECLARE(Any, Grammar);
+
 template<typename S>
 GRAMMAR_DECLARE(Not, Grammar);
+
+#define RULE(NAME, ...)      \
+struct NAME : public __VA_ARGS__ {   \
+};
+
+template<typename Head, typename... Tail>
+struct Selector : Selector<Tail...> {
+    bool operator()(std::type_index index) override {
+        if (index == typeid(Head)) {
+            return true;
+        }
+        return Selector<Tail...>::operator()(index);
+    }
+};
+
+template<typename Last>
+struct Selector<Last> {
+    virtual bool operator()(std::type_index index) {
+        if (index == typeid(Last)) {
+            return true;
+        }
+        return false;
+    }
+};
+
+RULE(Separator, Asterisk<Ord<Char<'\t'>, Char<' '>, Char<'\n'>, Char<'\r'>>>);
+
+
+template<typename Sep, typename... Rules>
+struct Interleaved;
+
+template<typename Sep, typename Rule0, typename... RulesRest>
+struct Interleaved<Sep, Rule0, RulesRest...>
+        : Seq<Rule0, Sep, Interleaved<Sep, RulesRest...>> {
+};
+
+template<typename Rule0>
+struct Interleaved<Rule0> : Rule0 {
+};
+
+template<typename... Rules>
+struct SpaceInterleaved : public Interleaved<Separator, Rules...> {};
+
+template<char ...Chars>
+struct Keyword : Seq<Char<Chars>...> {
+};
+
+
+std::ostream &escaped_string(std::ostream &out, std::string const &s);
+
+}
 
 #endif //FRONTEND_GRAMMAR_H
