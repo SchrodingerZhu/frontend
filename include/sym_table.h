@@ -30,7 +30,8 @@ namespace symtable {
             local_defined.top().push_back(name);
             auto iter = table.find(name);
             if (iter == table.end()) {
-                table.template insert({std::move(name), {{level, Value(std::forward<Args>(args)...)}}});
+                SymDef<Value> def =  {level, Value(std::forward<Args>(args)...)};
+                table.template insert( {std::move(name), def} );
             } else if (iter->first >= level) {
                 return false;
             } else {
