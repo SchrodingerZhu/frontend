@@ -42,7 +42,6 @@ namespace symtable {
 
         template<class ...Args>
         bool update(std::string name, Args &&... args) {
-            local_defined.top().push_back(name);
             auto iter = table.find(name);
             if (iter == table.end()) {
                 return false;
