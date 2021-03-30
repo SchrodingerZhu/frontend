@@ -35,6 +35,7 @@ namespace symtable {
          * Scope depth.
          */
         size_t level{};
+        bool record_updates = false;
     public:
         /*!
          * Enter a new scope.
@@ -79,6 +80,9 @@ namespace symtable {
             auto iter = table.find(name);
             if (iter == table.end()) {
                 return false;
+            } else if (iter->second.top().first < level && record_updates) {
+                iter->second.push({level, Value(std::forward<Args>(args)...)});
+                local_updated.top().emplace_back(std::move(name));
             } else {
                 iter->second.top().second = Value(std::forward<Args>(args)...);
                 local_updated.top().emplace_back(std::move(name));
@@ -91,7 +95,8 @@ namespace symtable {
          * @param name locate the symbol.
          * @return an optional structure contains the value.
          */
-        std::optional <Value> operator()(std::string name) {
+        std::optional <Value>
+        operator()(std::string name) {
             auto iter = table.find(name);
             if (iter == table.end()) {
                 return std::nullopt;
@@ -109,11 +114,12 @@ namespace symtable {
             }
         }
 
-        /*!
-         * Escape the current scope.
-         */
+/*!
+ * Escape the current scope.
+ */
         void escape() {
             auto a = std::move(local_defined.top());
+            auto b = std::move(local_updated.top());
             local_defined.pop();
             local_updated.pop();
             for (const auto &i : a) {
@@ -124,6 +130,18 @@ namespace symtable {
                 } else {
                     iter->second.pop();
                 }
+            }
+            if (record_updates) {
+                for (const auto &i : b) {
+                    auto iter = table.find(i);
+                    if (iter == table.end()) continue;
+                    if (iter->second.size() <= 1) {
+                        table.erase(iter);
+                    } else {
+                        iter->second.pop();
+                    }
+                }
+
             }
             level--;
         }
@@ -136,6 +154,7 @@ namespace symtable {
             }
             return collection;
         }
+
     };
 }
 
