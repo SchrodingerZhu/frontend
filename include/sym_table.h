@@ -100,6 +100,15 @@ namespace symtable {
             }
         }
 
+        bool defined_same_scope(std::string name) {
+            auto iter = table.find(name);
+            if (iter == table.end()) {
+                return false;
+            } else {
+                return iter->second.top().first == level;
+            }
+        }
+
         /*!
          * Escape the current scope.
          */
