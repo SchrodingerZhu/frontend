@@ -23,11 +23,11 @@ namespace symtable {
         /*!
          * Symbols defined in the inner most scope, which can be popped away when the scope is escaped.
          */
-        std::stack<std::vector<std::string>> local_defined{};
+        std::stack <std::vector<std::string>> local_defined{};
         /*!
          * Symbol table structure.
          */
-        std::unordered_map<std::string, std::stack<SymDef<Value>>> table{};
+        std::unordered_map <std::string, std::stack<SymDef<Value>>> table{};
         /*!
          * Scope depth.
          */
@@ -53,7 +53,7 @@ namespace symtable {
             local_defined.top().push_back(name);
             auto iter = table.find(name);
             if (iter == table.end()) {
-                table.template insert({name, std::stack<SymDef<Value>>{}});
+                table.template insert({name, std::stack < SymDef<Value>>{}});
                 table.at(name).push({level, Value(std::forward<Args>(args)...)});
             } else if (iter->second.top().first >= level) {
                 return false;
@@ -86,7 +86,7 @@ namespace symtable {
          * @param name locate the symbol.
          * @return an optional structure contains the value.
          */
-        std::optional<Value> operator()(std::string name) {
+        std::optional <Value> operator()(std::string name) {
             auto iter = table.find(name);
             if (iter == table.end()) {
                 return std::nullopt;
@@ -111,6 +111,15 @@ namespace symtable {
                 }
             }
             level--;
+        }
+
+        template<class Collection>
+        Collection local_definitions() {
+            Collection collection{};
+            for (auto &i : this->local_defined.top()) {
+                collection.insert(i);
+            }
+            return collection;
         }
     };
 }
