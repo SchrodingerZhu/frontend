@@ -117,7 +117,7 @@ namespace symtable {
         Collection local_definitions() {
             Collection collection{};
             for (auto &i : this->local_defined.top()) {
-                collection.insert(i);
+                collection.insert(std::make_pair(i, table.at(i).top().second));
             }
             return collection;
         }
