@@ -24,6 +24,9 @@ namespace symtable {
          * Symbols defined in the inner most scope, which can be popped away when the scope is escaped.
          */
         std::stack <std::vector<std::string>> local_defined{};
+        std::stack <std::vector<std::string>> local_updated{};
+
+
         /*!
          * Symbol table structure.
          */
@@ -38,6 +41,7 @@ namespace symtable {
          */
         void enter() {
             local_defined.template emplace();
+            local_updated.template emplace();
             level++;
         }
 
@@ -77,6 +81,7 @@ namespace symtable {
                 return false;
             } else {
                 iter->second.top().second = Value(std::forward<Args>(args)...);
+                local_updated.top().emplace_back(std::move(name));
             }
             return true;
         }
@@ -101,6 +106,7 @@ namespace symtable {
         void escape() {
             auto a = std::move(local_defined.top());
             local_defined.pop();
+            local_updated.pop();
             for (const auto &i : a) {
                 auto iter = table.find(i);
                 if (iter == table.end()) continue;
@@ -114,9 +120,9 @@ namespace symtable {
         }
 
         template<class Collection>
-        Collection local_definitions() {
+        Collection local_updates() {
             Collection collection{};
-            for (auto &i : this->local_defined.top()) {
+            for (auto &i : this->local_updated.top()) {
                 collection.insert(std::make_pair(i, table.at(i).top().second));
             }
             return collection;
