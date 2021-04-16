@@ -57,8 +57,8 @@ namespace symtable {
             local_defined.top().push_back(name);
             auto iter = table.find(name);
             if (iter == table.end()) {
-                table.template insert({name, std::stack < SymDef<Value>>{}});
-                table.at(name).push({level, Value(std::forward<Args>(args)...)});
+                table.template insert(std::make_pair(name, std::stack < SymDef<Value>>{}));
+                table.at(name).push(std::make_pair(level, Value(std::forward<Args>(args)...)));
             } else if (iter->second.top().first >= level) {
                 return false;
             } else {
@@ -80,7 +80,7 @@ namespace symtable {
             if (iter == table.end()) {
                 return false;
             } else if (iter->second.top().first < level) {
-                iter->second.push({level, Value(std::forward<Args>(args)...)});
+                iter->second.push(std::make_pair(level, Value(std::forward<Args>(args)...)));
                 local_updated.top().emplace_back(std::move(name));
             } else {
                 iter->second.top().second = Value(std::forward<Args>(args)...);
