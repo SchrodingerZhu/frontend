@@ -84,7 +84,7 @@ namespace symtable {
                 local_updated.top().emplace_back(std::move(name));
             } else {
                 iter->second.top().second = Value(std::forward<Args>(args)...);
-                local_updated.top().emplace_back(std::move(name));
+                if(!keep) local_updated.top().emplace_back(std::move(name));
             }
             return true;
         }
