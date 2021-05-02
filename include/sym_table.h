@@ -75,11 +75,11 @@ namespace symtable {
          * @return whether the new definition overwrites a previous symbol.
          */
         template<class ...Args>
-        bool update(std::string name, Args &&... args) {
+        bool update(std::string name, bool keep, Args &&... args) {
             auto iter = table.find(name);
             if (iter == table.end()) {
                 return false;
-            } else if (iter->second.top().first < level) {
+            } else if (!keep && iter->second.top().first < level) {
                 iter->second.push(std::make_pair(level, Value(std::forward<Args>(args)...)));
                 local_updated.top().emplace_back(std::move(name));
             } else {
