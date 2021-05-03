@@ -100,7 +100,8 @@ namespace symtable {
             if (iter == table.end()) {
                 return std::nullopt;
             } else {
-                return iter->second.top().second;
+                auto res =  iter->second.top().second;
+                return std::move(res);
             }
         }
 
@@ -118,27 +119,26 @@ namespace symtable {
  */
         void escape() {
             auto a = std::move(local_defined.top());
-            auto b = std::move(local_updated.top());
             local_defined.pop();
             local_updated.pop();
             for (const auto &i : a) {
                 auto iter = table.find(i);
                 if (iter == table.end()) continue;
-                if (iter->second.size() <= 1) {
+                if (iter->second.size() <= 1 ) {
                     table.erase(iter);
                 } else {
                     iter->second.pop();
                 }
             }
-            for (const auto &i : b) {
-                auto iter = table.find(i);
-                if (iter == table.end()) continue;
-                if (iter->second.size() <= 1) {
-                    table.erase(iter);
-                } else {
-                    iter->second.pop();
-                }
-            }
+//            for (const auto &i : b) {
+//                auto iter = table.find(i);
+//                if (iter == table.end()) continue;
+//                if (iter->second.size() <= 1) {
+//                    table.erase(iter);
+//                } else {
+//                    iter->second.pop();
+//                }
+//            }
 
             level--;
         }
